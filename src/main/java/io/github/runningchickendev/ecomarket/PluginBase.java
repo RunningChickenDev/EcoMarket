@@ -20,6 +20,7 @@ package io.github.runningchickendev.ecomarket;
 
 import java.util.Optional;
 
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
@@ -76,9 +77,8 @@ public class PluginBase {
 									Resource res = Resources.translate(type);
 									//Tell them the current price
 									double price = res.getPrice();
-									String formatted_price = String.format("%.0f\n", price);
-									src.sendMessage(Text.of(TextColors.BLUE, res.getName() + " has a price of: " + formatted_price));
-									sell(player, res, hand.getQuantity());
+									src.sendMessage(Text.of(TextColors.BLUE, res.getName() + " has a price of: " + StringFormats.noDecimal(price)));
+									sell(player, res, hand);
 								} else {
 									//You can't sell it
 									src.sendMessage(Text.of(TextColors.RED, "You can't sell that!"));
@@ -104,23 +104,60 @@ public class PluginBase {
 			.description(Text.of("Main market command. Use /market sell to sell something"))
 			.build();
 		
+		CommandSpec money = CommandSpec.builder()
+				.executor(new CommandExecutor() {
+					@Override
+					public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
+						if(src instanceof Player) {
+							Player player = (Player) src;
+							player.sendMessage(Text.of(TextColors.GOLD, "You have ",
+								TextColors.RED, StringFormats.noDecimal(Bank.getMoney(player)),
+								TextColors.GOLD, " coins"));
+						}
+						return null;
+					}
+				})
+				.build();
+		
 		Sponge.getCommandManager().register(this, market, "market");
+		Sponge.getCommandManager().register(this, money, "money");
+		logger.info("Everything seems fine... too fine...");
+		
+		JSONObject obj = new JSONObject("{\"info\":\"data\"}");
+		String info = obj.getString("info");
+		logger.warn("info:"+info);
 	}
 	
-	public void sell(Player p, Resource r, int quantity) {
+	public void sell(Player p, Resource r, ItemStack stack) {
 		
+		int init_quant = stack.getQuantity();
+		double[] quantYield = calcQuantYield(r, init_quant);
+		
+		int sold_quant = (int) quantYield[0];
+		double yield = quantYield[1];
+		
+		stack.setQuantity(0);
+		p.setItemInHand(HandTypes.MAIN_HAND, stack);
+		
+		p.sendMessage(Text.of(TextColors.BLUE, "Sold ",
+			TextColors.LIGHT_PURPLE, StringFormats.noDecimal(sold_quant), " " , r.getName(),
+			TextColors.BLUE, " for ",
+			TextColors.LIGHT_PURPLE, StringFormats.noDecimal(yield)));
+		
+		Bank.addMoney(p, yield);
+	}
+	
+	private double[] calcQuantYield(Resource r, int quantity) {
 		double yield = 0;
 		
 		for(int i=0;i<quantity;i++) {
 			yield += r.getPrice();
 			Resource.Circulation.addQuantity(r, 1);
+			if(r.isBlocked()) {
+				return new double[] {i, yield};
+			}
 		}
 		
-		p.sendMessage(Text.of(TextColors.BLUE, "Sold ",
-			TextColors.LIGHT_PURPLE, r.getName(),
-			TextColors.BLUE, " for ",
-			TextColors.LIGHT_PURPLE, yield));
-		
-		Bank.addMoney(p, yield);
+		return new double[] {quantity, yield};
 	}
 }

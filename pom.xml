@@ -2,13 +2,18 @@
   	<modelVersion>4.0.0</modelVersion>
   	<groupId>io.github.runningchickendev.ecomarket</groupId>
   	<artifactId>EcoMarket</artifactId>
-  	<version>0.0.1</version>
+  	<version>0.2</version>
   
   	<repositories>
   		<repository>
   			<id>sponge</id>
   			<url>http://repo.spongepowered.org/maven</url>
-  		</repository>	
+  		</repository>
+  		
+  		<repository>
+  			<id>json</id>
+  			<url>https://mvnrepository.com/artifact/org.json/json</url>
+  		</repository>
   	</repositories>
   
   	<dependencies>
@@ -18,6 +23,14 @@
         	<version>5.0.0</version>
         	<scope>provided</scope>
     	</dependency>
+    	
+    	<!-- https://mvnrepository.com/artifact/org.json/json -->
+		<dependency>
+    		<groupId>org.json</groupId>
+    		<artifactId>json</artifactId>
+    		<version>20160810</version>
+		</dependency>
+		
 	</dependencies>
 	
 </project>

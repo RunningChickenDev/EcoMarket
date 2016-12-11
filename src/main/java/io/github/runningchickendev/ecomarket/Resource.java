@@ -21,13 +21,20 @@ package io.github.runningchickendev.ecomarket;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.item.inventory.ItemStack;
+import org.spongepowered.api.scheduler.Scheduler;
+import org.spongepowered.api.scheduler.Task;
 
 public interface Resource {
 	
 	public static class Circulation {
 		
 		private static Map<Resource, Long> data = new HashMap<Resource, Long>();
+		private static Map<Resource, Boolean> block= new HashMap<Resource, Boolean>();
+		
+		private static final int delay = 1000;
+		private static final float restore_percentage = 0.4f;
 		
 		/**
 		 * Only internally!
@@ -71,7 +78,37 @@ public interface Resource {
 			if(isTooMuch(r)) {
 				//Set it to max
 				setQuantity(r, r.getMaxQuantity());
+				block(r);
 			}
+		}
+		
+		private static void block(Resource r) {
+			block.put(r, true);
+			Scheduler scheduler = Sponge.getScheduler();
+			Task.Builder task = scheduler.createTaskBuilder();
+			task.execute(new Runnable() {
+				@Override
+				public void run() {
+					block.put(r, false);
+					restore(r);
+				}
+			})
+			.delayTicks(delay);
+		}
+		
+		public static boolean isBlocked(Resource r) {
+			Boolean is = block.get(r);
+			if(is == null) {
+				return false;
+			} else {
+				return is;
+			}
+		}
+		
+		public static void restore(Resource r) {
+			long delta = r.getMaxQuantity() - r.getMinQuantity();
+			long newQuantity = (long) (restore_percentage * delta + r.getMinQuantity());
+			setQuantity(r, newQuantity);
 		}
 	}
 	
@@ -107,6 +144,9 @@ public interface Resource {
 				public double getPrice() {
 					//Fix before calculating
 					Circulation.fix(this);
+					if(isBlocked()) {
+						return 0;
+					}
 					
 					double a = (getMaxPrice() - getMinPrice()) / (getMinQuantity() - getMaxQuantity());
 					double b = getMaxPrice() - a*getMinQuantity();
@@ -153,6 +193,11 @@ public interface Resource {
 								",minP="+getMinPrice()+",maxP="+getMaxPrice()+
 							"}";
 					return s;
+				}
+
+				@Override
+				public boolean isBlocked() {
+					return Circulation.isBlocked(this);
 				}
 			};
 			
@@ -227,4 +272,10 @@ public interface Resource {
 	 */
 	public double getPrice();
 	public double getQuantity();
+	
+	/**
+	 * Too much stuff!
+	 * @return
+	 */
+	public boolean isBlocked();
 }
