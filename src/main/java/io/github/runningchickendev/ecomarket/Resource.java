@@ -29,7 +29,12 @@ public interface Resource {
 		
 		private static Map<Resource, Long> data = new HashMap<Resource, Long>();
 		
-		public static void addResource(Resource r) {
+		/**
+		 * Only internally!
+		 * 
+		 * @param r
+		 */
+		private static void addResource(Resource r) {
 			if(data.get(r) == null) {
 				data.put(r, 0L);
 			}
@@ -39,7 +44,7 @@ public interface Resource {
 			return data.get(r);
 		}
 		
-		protected static void setQuantity(Resource r, long v) {
+		private static void setQuantity(Resource r, long v) {
 			data.put(r, v);
 		}
 		

@@ -18,6 +18,7 @@
  */
 package io.github.runningchickendev.ecomarket.bank;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,18 +27,18 @@ import org.spongepowered.api.entity.living.player.Player;
 public class Bank {
 	
 	/** UNSAFE, but it doesn't matter */
-	private Map<UUID, Double> balances;
+	private static Map<UUID, Double> balances = new HashMap<UUID, Double>();
 	
-	public void setMoney(Player p, double money) {
+	public static void setMoney(Player p, double money) {
 		balances.put(p.getUniqueId(), money);
 	}
 	
-	public void addMoney(Player p, double money) {
+	public static void addMoney(Player p, double money) {
 		double prev = getMoney(p);
 		balances.put(p.getUniqueId(), prev + money);
 	}
 	
-	public double getMoney(Player p) {
+	public static double getMoney(Player p) {
 		Double money = balances.get(p.getUniqueId());
 		if(money == null) {
 			money = 0D;

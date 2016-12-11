@@ -18,8 +18,6 @@
  */
 package io.github.runningchickendev.ecomarket;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -34,9 +32,7 @@ import org.spongepowered.api.data.type.HandTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
-import org.spongepowered.api.event.item.inventory.InteractItemEvent;
 import org.spongepowered.api.item.ItemType;
-import org.spongepowered.api.item.ItemTypes;
 import org.spongepowered.api.item.inventory.ItemStack;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.text.Text;
@@ -44,10 +40,10 @@ import org.spongepowered.api.text.format.TextColors;
 
 import com.google.inject.Inject;
 
+import io.github.runningchickendev.ecomarket.bank.Bank;
+
 @Plugin(id="ecomarket", name="Economy Market", version="0.1")
 public class PluginBase {
-	
-	private Map<ItemType, Resource> item_translation;
 	
 	@Inject
 	private Logger logger;
@@ -59,11 +55,6 @@ public class PluginBase {
 	@Listener
 	public void onServerStart(GameStartedServerEvent start) {
 		logger.info("-- Economy Market --");
-		
-		//Add all the things to the translation table
-		item_translation = new HashMap<ItemType, Resource>();
-		item_translation.put(ItemTypes.LOG, Resources.WOOD.get());
-		item_translation.put(ItemTypes.STONE, Resources.STONE.get());
 		
 		// /market sell
 		CommandSpec marktet_sell = CommandSpec.builder()
@@ -80,13 +71,14 @@ public class PluginBase {
 								//They have something in their main hand
 								ItemStack hand = handOpt.get();	//Get that item
 								ItemType type = hand.getItem();	//Get that type
-								if(presentTranslation(type)) {	//Can you sell it?
+								if(Resources.presentTranslation(type)) {	//Can you sell it?
 									//You can sell it
-									Resource res = item_translation.get(type);
+									Resource res = Resources.translate(type);
 									//Tell them the current price
 									double price = res.getPrice();
 									String formatted_price = String.format("%.0f\n", price);
-									src.sendMessage(Text.of(TextColors.BLUE, res + " costs " + formatted_price));
+									src.sendMessage(Text.of(TextColors.BLUE, res.getName() + " has a price of: " + formatted_price));
+									sell(player, res, hand.getQuantity());
 								} else {
 									//You can't sell it
 									src.sendMessage(Text.of(TextColors.RED, "You can't sell that!"));
@@ -115,15 +107,20 @@ public class PluginBase {
 		Sponge.getCommandManager().register(this, market, "market");
 	}
 	
-	public boolean presentTranslation(ItemType type) {
-		return item_translation.containsKey(type);
+	public void sell(Player p, Resource r, int quantity) {
+		
+		double yield = 0;
+		
+		for(int i=0;i<quantity;i++) {
+			yield += r.getPrice();
+			Resource.Circulation.addQuantity(r, 1);
+		}
+		
+		p.sendMessage(Text.of(TextColors.BLUE, "Sold ",
+			TextColors.LIGHT_PURPLE, r.getName(),
+			TextColors.BLUE, " for ",
+			TextColors.LIGHT_PURPLE, yield));
+		
+		Bank.addMoney(p, yield);
 	}
-	
-	@Listener
-	public void onUse(InteractItemEvent event) {
-		ItemType type = event.getItemStack().getType();
-		logger.warn(type.getName());
-		logger.warn(item_translation.get(type).toString());
-	}
-	
 }

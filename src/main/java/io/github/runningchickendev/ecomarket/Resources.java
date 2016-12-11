@@ -18,34 +18,49 @@
  */
 package io.github.runningchickendev.ecomarket;
 
-public enum Resources {
+import java.util.HashMap;
+import java.util.Map;
+
+import org.spongepowered.api.item.ItemType;
+import org.spongepowered.api.item.ItemTypes;
+
+public class Resources {
 	
-	WOOD(Resource.builder()
+	public static final Resource WOOD = Resource.builder()
 			.setName("Wood")
 			.setId(00)
 			.setMinQ(1)
 			.setMaxQ(1000)
 			.setMinP(1)
-			.setMaxP(12)),
+			.setMaxP(12)
+			.build();
 	
-	STONE(Resource.builder()
+	public static final Resource STONE = Resource.builder()
 			.setName("Stone")
 			.setId(01)
 			.setMinQ(1)
 			.setMaxQ(800)
 			.setMinP(2)
-			.setMaxP(20));
+			.setMaxP(20)
+			.build();
 	
-	/**********/
+	private static Map<ItemType, Resource> translation = new HashMap<ItemType, Resource>();
 	
-	private Resource r;
-	
-	private Resources(Resource.Builder b) {
-		this.r = b.build();
+	static {
+		translation.put(ItemTypes.LOG, WOOD);
+		translation.put(ItemTypes.STONE, STONE);
 	}
 	
-	public Resource get() {
-		return r;
+	public static Resource translate(ItemType type) {
+		Resource r = translation.get(type);
+		if(r != null) {
+			return r;
+		} else {
+			throw new NullPointerException();
+		}
 	}
 	
+	public static boolean presentTranslation(ItemType type) {
+		return translation.containsKey(type);
+	}
 }
