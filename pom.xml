@@ -5,6 +5,7 @@
   	<version>0.2</version>
   
   	<repositories>
+  	
   		<repository>
   			<id>sponge</id>
   			<url>http://repo.spongepowered.org/maven</url>
@@ -12,11 +13,14 @@
   		
   		<repository>
   			<id>json</id>
-  			<url>https://mvnrepository.com/artifact/org.json/json</url>
+  			<url>http://mvnrepository.com/artifact/org.json/json</url>
   		</repository>
+  		
   	</repositories>
-  
+  	
+  	
   	<dependencies>
+  	
 		<dependency>
     		<groupId>org.spongepowered</groupId>
         	<artifactId>spongeapi</artifactId>
@@ -24,13 +28,14 @@
         	<scope>provided</scope>
     	</dependency>
     	
-    	<!-- https://mvnrepository.com/artifact/org.json/json -->
-		<dependency>
+    	<dependency>
     		<groupId>org.json</groupId>
     		<artifactId>json</artifactId>
     		<version>20160810</version>
-		</dependency>
-		
+    		<scope>system</scope>
+    		<systemPath>E:\Mihaita\Programming\Libraries\Json\json-20160810.jar</systemPath>
+    	</dependency>
+    	
 	</dependencies>
 	
 </project>
