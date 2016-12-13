@@ -20,13 +20,13 @@ package io.github.runningchickendev.ecomarket;
 
 import java.util.Optional;
 
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
+import org.spongepowered.api.command.args.GenericArguments;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.data.type.HandTypes;
@@ -57,12 +57,39 @@ public class PluginBase {
 	public void onServerStart(GameStartedServerEvent start) {
 		logger.info("-- Economy Market --");
 		
+		CommandSpec market_sell_cmd = CommandSpec.builder()
+				.description(Text.of("Can sell without having to be a Player"))
+				.permission("ecomarket.sell.cmd")
+				.arguments(
+						GenericArguments.onlyOne(GenericArguments.longNum(Text.of("id"))),
+						GenericArguments.onlyOne(GenericArguments.catalogedElement(Text.of("item"), ItemType.class)),
+						GenericArguments.onlyOne(GenericArguments.integer(Text.of("quantity")))
+				)
+				.executor(new CommandExecutor() {
+					@Override
+					public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
+						if(src instanceof Player) {
+							src.sendMessage(Text.of(TextColors.RED, "Sorry, this command is cmd only!"));
+							return CommandResult.empty();
+						}
+						
+						long id = args.<Integer>getOne(Text.of("id")).get();
+						ItemType item = args.<ItemType>getOne(Text.of("item")).get();
+						int quantity = args.<Integer>getOne(Text.of("quantity")).get();
+						
+						sell(src, id, Resources.translate(item), quantity);
+						
+						return CommandResult.success();
+					}
+				})
+				.build();
+		
 		// /market sell
 		CommandSpec marktet_sell = CommandSpec.builder()
+				.child(market_sell_cmd, "cmd")
 				.description(Text.of("Sell your stuff here!"))
 				.permission("ecomarket.sell")
 				.executor(new CommandExecutor() {
-					@Override
 					public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 						if(src instanceof Player) {		//Is it player?
 							//It is a player
@@ -89,7 +116,7 @@ public class PluginBase {
 							}
 						} else {
 							//It is not a Player
-							src.sendMessage(Text.of(TextColors.YELLOW, "Console market is not implemented yet"));
+							src.sendMessage(Text.of(TextColors.RED, "Use /market sell cmd, if you want to sell!"));
 						}
 						//Done!
 						return CommandResult.success();
@@ -106,7 +133,6 @@ public class PluginBase {
 		
 		CommandSpec money = CommandSpec.builder()
 				.executor(new CommandExecutor() {
-					@Override
 					public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
 						if(src instanceof Player) {
 							Player player = (Player) src;
@@ -122,10 +148,23 @@ public class PluginBase {
 		Sponge.getCommandManager().register(this, market, "market");
 		Sponge.getCommandManager().register(this, money, "money");
 		logger.info("Everything seems fine... too fine...");
+	}
+	
+	public void sell(CommandSource src, long id, Resource r, int quantity) {
 		
-		JSONObject obj = new JSONObject("{\"info\":\"data\"}");
-		String info = obj.getString("info");
-		logger.warn("info:"+info);
+		int init_quant = quantity;
+		double[] quantYield = calcQuantYield(r, init_quant);
+		
+		int sold_quant = (int) quantYield[0];
+		double yield = quantYield[1];
+		
+		Bank.addMoney(id, yield);
+		
+		src.sendMessage(Text.of(TextColors.BLUE, "Sold ",
+				TextColors.LIGHT_PURPLE, StringFormats.noDecimal(sold_quant), " " , r.getName(),
+				TextColors.BLUE, " for ",
+				TextColors.LIGHT_PURPLE, StringFormats.noDecimal(yield),
+				", on account id ", Long.toString(id)));
 	}
 	
 	public void sell(Player p, Resource r, ItemStack stack) {

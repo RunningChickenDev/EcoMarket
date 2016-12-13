@@ -124,6 +124,7 @@ public interface Resource {
 		private long maxQ;
 		private double minP;
 		private double maxP;
+		private long drain;
 		
 		public Builder() {}
 		
@@ -175,6 +176,10 @@ public interface Resource {
 				
 				public double getMaxPrice() {
 					return Builder.this.maxP;
+				}
+				
+				public long getDrainPerMinute() {
+					return Builder.this.drain;
 				}
 				
 				public long getId() {
@@ -229,29 +234,21 @@ public interface Resource {
 			this.maxP = maxP;
 			return this;
 		}
+		public void setDrain(long drain) {
+			this.drain = drain;
+		}
 	}
 	
 	public String getName();
 	public long getId();
 	
-	/**
-	 * Minimum amount allowed.
-	 * Below this is not possible.
-	 */
 	public long getMinQuantity();
-	/**
-	 * Maximum amount allowed.
-	 * If there's too much, all trade
-	 * with this good will be halted for
-	 * a while, and it will be reset.
-	 */
 	public long getMaxQuantity();
-	
-	/**
-	 * Lowest price of a resource
-	 */
+
 	public double getMinPrice();
 	public double getMaxPrice();
+	
+	public long getDrainPerMinute();
 	
 	/**
 	 * Calculates.
@@ -271,11 +268,15 @@ public interface Resource {
 	 * P(Q) = a*Q + b = (maxP-minP)/(maxQ-minQ)*Q + maxP-(maxP-minP)/(maxQ-minQ)*minQ
 	 */
 	public double getPrice();
+	/**
+	 * Reference to {@link Circulation}
+	 * @return	{@link Circulation#getQuantity(Resource)}
+	 */
 	public double getQuantity();
 	
 	/**
-	 * Too much stuff!
-	 * @return
+	 * Too much stuff?
+	 * @return	Is quantity higher than max?
 	 */
 	public boolean isBlocked();
 }
